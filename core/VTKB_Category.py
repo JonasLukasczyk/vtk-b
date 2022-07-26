@@ -6,7 +6,6 @@ class VTKB_Category(nodeitems_utils.NodeCategory):
 
   @staticmethod
   def addItem(category,node):
-    print(category,node)
     if not VTKB_Category.categories.get(category):
       VTKB_Category.categories[category] = []
     VTKB_Category.categories[category].append(
@@ -17,7 +16,6 @@ class VTKB_Category(nodeitems_utils.NodeCategory):
   def generate():
     node_categories = [];
     for n,items in VTKB_Category.categories.items():
-      print(n,items)
       node_categories.append(
         VTKB_Category(n, n, items=items),
       )

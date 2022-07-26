@@ -40,6 +40,8 @@ class VTKB_Node(bpy.types.Node):
         case 'VTKB_NodeSocketDataObject':
           s.display_shape = 'DIAMOND'
           s.index = template.value
+        case 'VTKB_NodeSocketEnum':
+          s.setEnums(template.extras['enumItems'],template.value)
         case 'VTKB_NodeSocketArray':
           self.width=w*2
           s.pIdx = template.value[0]

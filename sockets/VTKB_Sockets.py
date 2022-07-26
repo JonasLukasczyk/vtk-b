@@ -5,30 +5,6 @@ from ..nodes import VTKB_NodeConverters
 EXPORTS = []
 
 ################################################################################
-class VTKB_NodeSocketEnum(bpy.types.NodeSocket):
-  bl_idname = "VTKB_NodeSocketEnum"
-  bl_label = "Enum Socket"
-
-  def toggleVis(self,context):
-    for s in self.node.inputs:
-      s.hide = self.mybool
-
-  def getEnums(self,context):
-    return [(x,x,x) for x in self.enums.split(';')]
-
-  enum: bpy.props.EnumProperty(name='', default=0, items=getEnums)
-  enums: bpy.props.StringProperty(name='', default='Bob;Test;Array')
-
-  def draw(self, context, layout, node, text):
-    layout.label(text=text)
-    layout.prop(self,'enum')
-
-  def draw_color(self, context, node):
-    return (0, 0.5, 0, 1)
-
-EXPORTS.append(VTKB_NodeSocketEnum)
-
-################################################################################
 class VTKB_NodeSocketDataObject(bpy.types.NodeSocket):
   bl_idname = "VTKB_NodeSocketDataObject"
   bl_label = "Data Object Socket"
@@ -89,7 +65,6 @@ class VTKB_NodeSocketArray(bpy.types.NodeSocket):
             len(items),
           )
         )
-
     return items
 
   def update_value(self,context):
@@ -118,6 +93,41 @@ class VTKB_NodeSocketArray(bpy.types.NodeSocket):
     return (0, 163/255, 225/255, 1)
 
 EXPORTS.append(VTKB_NodeSocketArray)
+
+################################################################################
+class VTKB_NodeSocketEnum(bpy.types.NodeSocketInt):
+  bl_idname = "VTKB_NodeSocketEnum"
+  bl_label = "Enum Socket"
+
+  def toggleVis(self,context):
+    for s in self.node.inputs:
+      s.hide = self.mybool
+
+  def getEnums(self,context):
+    return [(x,x.split('_')[1],'') for x in self.enums.split(';')]
+
+  def setEnums(self,enums,default_value):
+    self.enums = ';'.join([str(value)+'_'+label for (value,label) in enums])
+    for (value,label) in enums:
+      if value==default_value:
+        self.enum = str(value)+'_'+label
+
+  def getEnumAsInt(self):
+    return int(self.enum.split('_')[0])
+
+  enum: bpy.props.EnumProperty(name='', default=0, items=getEnums)
+  enums: bpy.props.StringProperty(name='', default='Bob;Test;Array')
+
+  def draw(self, context, layout, node, text):
+    layout.label(text=text)
+    layout.prop(self,'enum')
+
+  def draw_color(self, context, node):
+    return (0, 0.5, 0, 1)
+
+EXPORTS.append(VTKB_NodeSocketEnum)
+
+################################################################################
 
 def export():
   return EXPORTS

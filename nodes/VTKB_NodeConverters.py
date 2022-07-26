@@ -43,29 +43,45 @@ def addAttributes(vtkDataObject,blenderObject):
       array = data.GetArray(i)
       blenderType = None
       target = None
-      match array.GetDataType():
-        case 10:
-          if array.GetNumberOfComponents()==1:
-            blenderType = 'FLOAT'
-            target='value'
-          elif array.GetNumberOfComponents()==3:
-            blenderType = 'FLOAT_VECTOR'
-            target='vector'
-        case 6:
-          if array.GetNumberOfComponents()==1:
-            blenderType = 'INT'
-            target='value'
-        case 2:
-          if array.GetNumberOfComponents()==1:
-            blenderType = 'INT8'
-            target='value'
-        case _:
-          print('ERROR: Unsupported Data Type:')
-          print(array)
+      if array.GetNumberOfComponents()==1:
+        blenderType = 'FLOAT'
+        target='value'
+      elif array.GetNumberOfComponents()==3:
+        blenderType = 'FLOAT_VECTOR'
+        target='vector'
+      else:
+        print('ERROR: Unsupported Data Type:')
+        print(array)
+      # match array.GetDataType():
+      #   case 10:
+      #     if array.GetNumberOfComponents()==1:
+      #       blenderType = 'FLOAT'
+      #       target='value'
+      #     elif array.GetNumberOfComponents()==3:
+      #       blenderType = 'FLOAT_VECTOR'
+      #       target='vector'
+      #   case 6:
+      #     if array.GetNumberOfComponents()==1:
+      #       blenderType = 'INT'
+      #       target='value'
+      #   case 2:
+      #     if array.GetNumberOfComponents()==1:
+      #       blenderType = 'INT8'
+      #       target='value'
+      #   case _:
+      #     print('ERROR: Unsupported Data Type:')
+      #     print(array)
 
       if blenderType!=None and target!=None:
-        attribute = blenderObject.data.attributes.new(name=array.GetName(), type=blenderType, domain=attributeDomain[a])
-        attribute.data.foreach_set(target, vtk_to_numpy(array).ravel())
+        attribute = blenderObject.data.attributes.new(
+          name=array.GetName(),
+          type=blenderType,
+          domain=attributeDomain[a]
+        )
+        attribute.data.foreach_set(
+          target,
+          vtk_to_numpy(array).ravel().astype('f4')
+        )
 
   return 1
 
@@ -236,6 +252,16 @@ def convertVtkDataObjectFromSocket(socket):
     return 0
 
   node = socket.node
+  name = node.name
+  if len(node.outputs)>1:
+    name += '_'+str(socket.index)
+
+  if not socket.convert:
+    deleteBlenderObject(name+'_M')
+  if not socket.outline:
+    deleteBlenderObject(name+'_BB')
+  if not socket.convert and not socket.outline:
+    return 1
 
   vtkAlgorithm,_ = node.getVtkAlgorithm()
   if not vtkAlgorithm:
@@ -245,19 +271,12 @@ def convertVtkDataObjectFromSocket(socket):
   if not vtkDataObject:
     return 0
 
-  name = node.name
-  if len(node.outputs)>1:
-    name += '_'+str(socket.index)
-
   if socket.outline:
     vtkOutlineToBlender(vtkDataObject,name+'_BB')
-  else:
-    deleteBlenderObject(name+'_BB')
-
   if socket.convert:
     return convertVtkDataObject(vtkDataObject,socket,name+'_M')
-  else:
-    return deleteBlenderObject(name+'_M')
+
+  return 1
 
 ################################################################################
 class VTKB_NodeConverters(VTKB_Node):

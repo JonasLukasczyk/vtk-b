@@ -37,14 +37,18 @@ class VTKB_NodeAlgorithm(VTKB_Node):
     return VTKB_NodeAlgorithm.vtkAlgorithms.get( self.getKey() )
 
   @staticmethod
+  def ready(vtkAlgorithm):
+    for i in range(vtkAlgorithm.GetNumberOfInputPorts()):
+      if vtkAlgorithm.GetInputPortInformation(i).Has(vtkAlgorithm.INPUT_IS_OPTIONAL()):
+        continue
+      if vtkAlgorithm.GetNumberOfInputConnections(i)<1:
+        return False
+    return True
+
+  @staticmethod
   def syncVtkAlgorithms():
     for _,(a,p) in VTKB_NodeAlgorithm.vtkAlgorithms.items():
-      ready = True
-      for i in range(a.GetNumberOfInputPorts()):
-        # print('ready: ',getNode(a).name+'_'+str(i)+'_'+str(a.GetNumberOfInputConnections(i)))
-        if a.GetNumberOfInputConnections(i)<1:
-          ready = False
-      if ready:
+      if VTKB_NodeAlgorithm.ready(a):
         node = VTKB_NodeAlgorithm.getNode(a)
         try:
           p['ErrorObserver'].ErrorOccurred = False
@@ -68,6 +72,8 @@ class VTKB_NodeAlgorithm(VTKB_Node):
         v = [s.pIdx,s.pPort, s.pConnection,s.pAttribute,s.pName]
       elif template.type == 'NodeSocketVector':
         v = [s.default_value[0],s.default_value[1],s.default_value[2]]
+      elif template.type == 'VTKB_NodeSocketEnum':
+        v = s.getEnumAsInt()
       else:
         v = s.default_value
 

@@ -39,7 +39,7 @@ def execute(scene,graph):
     if not tree.NEEDS_UPDATE:
       continue
 
-    print('VTK-B: EXECUTE TREE',tree.name)
+    print('[VTK-B] EXECUTE TREE',tree.name)
 
     VTKB_NodeAlgorithm.deleteVtkAlgorithmOrphans()
 
@@ -68,22 +68,23 @@ if execute not in bpy.app.handlers.load_post:
   bpy.app.handlers.load_post.append(execute)
 
 def register():
+  print('[VTK-B] Registering Classes')
   for m in modules:
     for cls in m.export():
-      print('reg', cls)
+      # print('reg', cls)
       bpy.utils.register_class(cls)
-
   nodeitems_utils.register_node_categories(
     'VTKB_NODES',
     core.VTKB_Category.VTKB_Category.generate()
   )
 
 def unregister():
-  nodeitems_utils.unregister_node_categories('VTKB_NODES')
+  print('[VTK-B] Unregistering Classes')
 
+  nodeitems_utils.unregister_node_categories('VTKB_NODES')
   for m in modules[::-1]:
     for cls in m.export()[::-1]:
-      print('unreg', cls)
+      # print('unreg', cls)
       bpy.utils.unregister_class(cls)
 
 if __name__ == "__main__":
