@@ -18,10 +18,10 @@ sys.path.insert(0,'/home/jones/external/projects/paraview/install/lib/python3.10
 import bpy
 import nodeitems_utils
 
+from . import registry
 from . import core
 from . import sockets
 from . import nodes
-modules = [core,sockets,nodes]
 
 nodes.VTKB_Factory.generateVTKBNodesFromXMLS()
 
@@ -69,23 +69,23 @@ if execute not in bpy.app.handlers.load_post:
 
 def register():
   print('[VTK-B] Registering Classes')
-  for m in modules:
-    for cls in m.export():
-      # print('reg', cls)
-      bpy.utils.register_class(cls)
+  for cls in registry.UI_CLASSES:
+    print('reg', cls)
+    bpy.utils.register_class(cls)
   nodeitems_utils.register_node_categories(
     'VTKB_NODES',
     core.VTKB_Category.VTKB_Category.generate()
   )
 
+  bpy.types.WindowManager.CreateColorMapOperatorProps = bpy.props.PointerProperty(type=core.VTKB_ColorMapUtils.CreateColorMapOperatorProps)
+
 def unregister():
   print('[VTK-B] Unregistering Classes')
 
   nodeitems_utils.unregister_node_categories('VTKB_NODES')
-  for m in modules[::-1]:
-    for cls in m.export()[::-1]:
-      # print('unreg', cls)
-      bpy.utils.unregister_class(cls)
+  for cls in registry.UI_CLASSES[::-1]:
+    print('unreg', cls)
+    bpy.utils.unregister_class(cls)
 
 if __name__ == "__main__":
   register()

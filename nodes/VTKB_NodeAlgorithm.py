@@ -143,10 +143,10 @@ class VTKB_NodeAlgorithm(VTKB_Node):
     if a:
       return a
 
-    if self.bl_idname.startswith('ttk'):
-      a = getattr(ttk,self.bl_idname,None)()
+    if self.bl_label.startswith('ttk'):
+      a = getattr(ttk,self.bl_label,None)()
     else:
-      a = getattr(vtk,self.bl_idname,None)()
+      a = getattr(vtk,self.bl_label,None)()
 
     if not a:
       print('REGISTRY ERROR: Unable to create vtkAlgorithm for node')

@@ -2,7 +2,7 @@ import bpy
 
 from ..nodes import VTKB_NodeConverters
 
-EXPORTS = []
+from .. import registry
 
 ################################################################################
 class VTKB_NodeSocketDataObject(bpy.types.NodeSocket):
@@ -25,7 +25,7 @@ class VTKB_NodeSocketDataObject(bpy.types.NodeSocket):
   def draw_color(self, context, node):
     return (0, 163/255, 225/255, 1)
 
-EXPORTS.append(VTKB_NodeSocketDataObject)
+registry.UI_CLASSES.append(VTKB_NodeSocketDataObject)
 
 ################################################################################
 class VTKB_NodeSocketArray(bpy.types.NodeSocket):
@@ -92,7 +92,7 @@ class VTKB_NodeSocketArray(bpy.types.NodeSocket):
   def draw_color(self, context, node):
     return (0, 163/255, 225/255, 1)
 
-EXPORTS.append(VTKB_NodeSocketArray)
+registry.UI_CLASSES.append(VTKB_NodeSocketArray)
 
 ################################################################################
 class VTKB_NodeSocketEnum(bpy.types.NodeSocketInt):
@@ -115,7 +115,7 @@ class VTKB_NodeSocketEnum(bpy.types.NodeSocketInt):
   def getEnumAsInt(self):
     return int(self.enum.split('_')[0])
 
-  enum: bpy.props.EnumProperty(name='', default=0, items=getEnums)
+  enum: bpy.props.EnumProperty(name='', default=0, items=getEnums, update= lambda socket,_: socket.node.id_data.update())
   enums: bpy.props.StringProperty(name='', default='Bob;Test;Array')
 
   def draw(self, context, layout, node, text):
@@ -125,9 +125,4 @@ class VTKB_NodeSocketEnum(bpy.types.NodeSocketInt):
   def draw_color(self, context, node):
     return (0, 0.5, 0, 1)
 
-EXPORTS.append(VTKB_NodeSocketEnum)
-
-################################################################################
-
-def export():
-  return EXPORTS
+registry.UI_CLASSES.append(VTKB_NodeSocketEnum)

@@ -1,6 +1,4 @@
-import bpy
-
-from .VTKB_Tree import VTKB_Tree
-
-def export():
-  return [VTKB_Tree]
+from . import VTKB_Category
+from . import VTKB_Tree
+from . import VTKB_ColorMaps
+from . import VTKB_ColorMapUtils

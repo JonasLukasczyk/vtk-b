@@ -4,8 +4,8 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 from ..core import VTKB_Category
 from .VTKB_Node import VTKB_Node
+from .. import registry
 
-EXPORT = []
 
 # Print iterations progress
 def printProgressBar(
@@ -309,7 +309,4 @@ class VTKB_ToBlenderMesh(VTKB_NodeConverters):
       self.setStatus('error')
 
 VTKB_Category.VTKB_Category.addItem('Blender',VTKB_ToBlenderMesh)
-EXPORT.append(VTKB_ToBlenderMesh)
-
-def export():
-  return EXPORT
+registry.UI_CLASSES.append(VTKB_ToBlenderMesh)
