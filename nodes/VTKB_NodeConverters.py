@@ -1,6 +1,7 @@
 import bpy
 import numpy
 from vtk.util.numpy_support import vtk_to_numpy
+import pyopenvdb as vdb
 
 from ..core import VTKB_Category
 from .VTKB_Node import VTKB_Node
@@ -95,11 +96,23 @@ def addToVTKCollection(blenderObject):
   blenderObject.select_set(True)
   bpy.context.view_layer.objects.active = blenderObject
 
-def initBlenderObject(name,blenderMesh):
-  blenderObject = bpy.data.objects.get(name)
-  if not blenderObject:
-    blenderObject = bpy.data.objects.new(name, blenderMesh)
-  return blenderObject
+def applyVtkTransformation(object):
+  settings = bpy.context.window_manager.VTKB_Settings
+  object.location = settings.vtkLocation
+  object.rotation_euler = [r/180.0*3.141592653589793 for r in settings.vtkRotation]
+  # (settings.vtkRotation[0],settings.vtkRotation[1],settings.vtkRotation[2])/360.0*3.141592653589793
+  object.scale[0] = settings.vtkScale
+  object.scale[1] = settings.vtkScale
+  object.scale[2] = settings.vtkScale
+
+def initBlenderObject(name,mesh):
+  object = bpy.data.objects.get(name)
+  if not object:
+    object = bpy.data.objects.new(name, mesh)
+
+  applyVtkTransformation(object)
+
+  return object
 
 def deleteBlenderObject(name):
   toDelete = []
@@ -166,9 +179,44 @@ def vtkOutlineToBlender(vtkDataObject,name):
   blenderObject = initBlenderObject(name,blenderMesh)
   wireframe = blenderObject.modifiers.new('WIREFRAME', 'WIREFRAME')
   wireframe.offset = 1
+  wireframe.use_relative_offset = True
 
   addToVTKCollection(blenderObject)
   return 1
+
+def vtkImageDataToBlender(vtkDataObject,name,socket):
+
+  dim = vtkDataObject.GetDimensions()
+
+  pointData = vtkDataObject.GetPointData()
+  grids = []
+  for i in range(pointData.GetNumberOfArrays()):
+    array = pointData.GetArray(i)
+    if not array:
+      continue
+    if array.GetNumberOfComponents()!=1:
+      continue
+
+    arrayData = vtk_to_numpy(array).ravel().astype('f4').reshape(dim)
+    grid = vdb.FloatGrid()
+    grid.name = array.GetName()
+    grid.copyFromArray(arrayData)
+    grids.append(grid)
+
+  path = bpy.app.tempdir + '/' + name + '.vdb'
+  print(path)
+  vdb.write(path, grids=grids)
+
+  state = socket.node.id_data.NEEDS_UPDATE
+  socket.node.id_data.NEEDS_UPDATE = False
+  settings = bpy.context.window_manager.VTKB_Settings
+  bpy.ops.object.volume_import( filepath=path )
+  socket.node.id_data.NEEDS_UPDATE = state
+
+  initBlenderObject(name,None)
+
+  return 1
+
 
 def vtkMeshToBlender(vtkDataObject,name):
 
@@ -237,12 +285,14 @@ def convertVtkDataObject(vtkDataObject,socket,name):
       convertVtkDataObject(vtkDataObject.GetBlock(b),socket,name+'_B'+str(b))
     return 1
 
-  if socket.modifiedTime == vtkDataObject.GetMTime() and bpy.data.objects.get(name):
+  object = bpy.data.objects.get(name)
+  if socket.modifiedTime == vtkDataObject.GetMTime() and object:
+    applyVtkTransformation(object)
     return 1
   socket.modifiedTime = vtkDataObject.GetMTime()
 
   if vtkDataObject.IsA('vtkImageData'):
-    print('unable to convert vtkImageData yet')
+    return vtkImageDataToBlender(vtkDataObject,name,socket)
   else:
     return vtkMeshToBlender(vtkDataObject,name)
   return 0
@@ -257,7 +307,7 @@ def convertVtkDataObjectFromSocket(socket):
     name += '_'+str(socket.index)
 
   if not socket.convert:
-    deleteBlenderObject(name+'_M')
+    deleteBlenderObject(name+'_O')
   if not socket.outline:
     deleteBlenderObject(name+'_BB')
   if not socket.convert and not socket.outline:
@@ -274,7 +324,7 @@ def convertVtkDataObjectFromSocket(socket):
   if socket.outline:
     vtkOutlineToBlender(vtkDataObject,name+'_BB')
   if socket.convert:
-    return convertVtkDataObject(vtkDataObject,socket,name+'_M')
+    return convertVtkDataObject(vtkDataObject,socket,name+'_O')
 
   return 1
 

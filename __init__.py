@@ -77,8 +77,6 @@ def register():
     core.VTKB_Category.VTKB_Category.generate()
   )
 
-  bpy.types.WindowManager.CreateColorMapOperatorProps = bpy.props.PointerProperty(type=core.VTKB_ColorMapUtils.CreateColorMapOperatorProps)
-
 def unregister():
   print('[VTK-B] Unregistering Classes')
 

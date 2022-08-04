@@ -3,103 +3,32 @@ import bpy
 import os
 
 from .. import registry
-from . import VTKB_ColorMaps
 
 ################################################################################
-class VTKB_PanelShaderEditor(bpy.types.Panel):
-    bl_idname = "NODEEDITOR_PT_shader_editor"
-    bl_label = "Hello World"
+class VTKB_Panel(bpy.types.Panel):
+    bl_idname = "NODEEDITOR_PT_VTKB"
+    bl_label = "VTK-B"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = "object"
 
+    firstTree = None
+
     def draw(self, context):
-        self.layout.label(text="Hello World")
-        prop_grp = context.window_manager.CreateColorMapOperatorProps
-        # op = self.layout.operator('opr.create_color_map_operator', text='Create Color Map')
-        self.layout.prop(prop_grp, 'ColorMaps')
+      if not VTKB_Panel.firstTree:
+        for tree in bpy.data.node_groups:
+          if tree.bl_idname=='VTKB_Tree':
+            VTKB_Panel.firstTree = tree
+            break
 
-registry.UI_CLASSES.append(VTKB_PanelShaderEditor)
+      self.layout.label(text='Generate Colormap')
+      self.layout.prop(VTKB_Panel.firstTree, 'Colormaps', text='')
+      self.layout.label(text='Blender Conversion')
+      self.layout.prop(VTKB_Panel.firstTree, 'vtkLocation', text='Location')
+      self.layout.prop(VTKB_Panel.firstTree, 'vtkRotation', text='Rotation')
+      self.layout.prop(VTKB_Panel.firstTree, 'vtkScale', text='Scale')
 
-################################################################################
-class CreateColorMapOperatorProps(bpy.types.PropertyGroup):
-
-  def applyColorMap(self,context):
-    if len(context.selected_nodes)<1:
-      return
-    ramp = context.selected_nodes[0]
-    if ramp.bl_idname!='ShaderNodeValToRGB':
-      return
-
-    for i in range(1,len(ramp.color_ramp.elements))[::-1]:
-      ramp.color_ramp.elements.remove(ramp.color_ramp.elements[i])
-
-    controlPoints = VTKB_ColorMaps.COLOR_MAPS[self.ColorMaps]
-
-    ramp.color_ramp.elements[0].position = controlPoints[0]
-    ramp.color_ramp.elements[0].color = (controlPoints[1],controlPoints[2],controlPoints[3],1)
-    for i,idx in enumerate(range(4,len(controlPoints),4)):
-      ramp.color_ramp.elements.new(controlPoints[idx])
-      ramp.color_ramp.elements[i+1].color = (controlPoints[idx+1],controlPoints[idx+2],controlPoints[idx+3],1)
-
-
-  ColorMaps : bpy.props.EnumProperty(
-    items=[
-      ('Accent','Accent',''),
-      ('Blues','Blues',''),
-      ('BrBG','BrBG',''),
-      ('BuGn','BuGn',''),
-      ('BuPu','BuPu',''),
-      ('Dark2','Dark2',''),
-      ('GnBu','GnBu',''),
-      ('Greens','Greens',''),
-      ('Greys','Greys',''),
-      ('OrRd','OrRd',''),
-      ('Oranges','Oranges',''),
-      ('PRGn','PRGn',''),
-      ('Paired','Paired',''),
-      ('Pastel1','Pastel1',''),
-      ('Pastel2','Pastel2',''),
-      ('PiYG','PiYG',''),
-      ('PuBu','PuBu',''),
-      ('PuBuGn','PuBuGn',''),
-      ('PuOr','PuOr',''),
-      ('PuRd','PuRd',''),
-      ('Purples','Purples',''),
-      ('RdBu','RdBu',''),
-      ('RdGy','RdGy',''),
-      ('RdPu','RdPu',''),
-      ('RdYlBu','RdYlBu',''),
-      ('RdYlGn','RdYlGn',''),
-      ('Reds','Reds',''),
-      ('Set1','Set1',''),
-      ('Set2','Set2',''),
-      ('Set3','Set3',''),
-      ('Spectral','Spectral',''),
-      ('YlGn','YlGn',''),
-      ('YlGnBu','YlGnBu',''),
-      ('YlOrBr','YlOrBr',''),
-      ('YlOrRd','YlOrRd',''),
-      ('autumn','autumn',''),
-      ('binary','binary',''),
-      ('bone','bone',''),
-      ('cool','cool',''),
-      ('copper','copper',''),
-      ('flag','flag',''),
-      ('gist_earth','gist_earth',''),
-      ('gist_gray','gist_gray',''),
-      ('gist_heat','gist_heat',''),
-      ('gist_ncar','gist_ncar',''),
-      ('gist_rainbow','gist_rainbow',''),
-      ('gist_stern','gist_stern',''),
-      ('gist_yarg','gist_yarg',''),
-      ('gray','gray',''),
-      ('hot','hot',''),
-    ],
-    update=applyColorMap
-  )
-
-registry.UI_CLASSES.append(CreateColorMapOperatorProps)
+registry.UI_CLASSES.append(VTKB_Panel)
 
 
 # maps = {}

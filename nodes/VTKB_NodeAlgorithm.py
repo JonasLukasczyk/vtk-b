@@ -85,8 +85,19 @@ class VTKB_NodeAlgorithm(VTKB_Node):
       # print('update-prop',self.name+'_'+template.name+'_'+str(v))
       if template.method=='SetInputArrayToProcess':
         a.SetInputArrayToProcess(*v)
+      elif type(v) == list:
+          try:
+            getattr(a,template.method)( v )
+          except:
+            getattr(a,template.method)( [int(i) for i in v] )
       else:
-        getattr(a,template.method)( v )
+          try:
+            getattr(a,template.method)( v )
+          except:
+            getattr(a,template.method)( int(v) )
+          # getattr(a,template.method)( v )
+
+
 
   def syncVtkConnections(self):
     iAlgorithm,_ = self.getVtkAlgorithm()
